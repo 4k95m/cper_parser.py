@@ -41,7 +41,8 @@ sec_sev = sec_desc[-48:-40]
 fru_txt = sec_desc[-40:]
 fru_txt_ascii = bytearray.fromhex(fru_txt).decode()
 
-result= "Signature Start   : " + sig_start + " (" + bytearray.fromhex(sig_start).decode() + ")" + "\n" + \
+rec_header = \
+        "Signature Start   : " + sig_start + " (" + bytearray.fromhex(sig_start).decode() + ")" + "\n" + \
         "Revision          : " + revision + "\n" + \
         "Signature End     : " + sig_end + "\n" + \
         "Section Count     : " + sec_cnt + "\n" + \
@@ -56,13 +57,17 @@ result= "Signature Start   : " + sig_start + " (" + bytearray.fromhex(sig_start)
         "Record ID         : " + rec_id + "\n" + \
         "Flags             : " + flags + "\n" + \
         "Persistence Info  : " + persis_info + "\n" + \
-        "Reserved [ZERO]   : " + resv + "\n" + \
-        "Section Descriptor: " + "\n" + \
+        "Reserved [ZERO]   : " + resv + "\n"
+        
+descriptor = \
         "- Section Severity: " + sec_sev + "\n" + \
         "- FRU Text (Hex)  : " + fru_txt + "\n" + \
         "- FRU Text (Ascii): " + fru_txt_ascii
 
 print("\nCPER Parse result:")
 print("\nRaw data length: "+ str(int(len(raw)/2)) + "\n")
-print(result)
+print("[Record Header]")
+print(rec_header)
+print("\n[Section Descriptor]")
+print(descriptor)
 
