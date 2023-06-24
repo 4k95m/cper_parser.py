@@ -13,9 +13,21 @@ def bcd_parser(bcd):
 
 
 
+def severity(sev):
+    if sev == "00000000":
+        sev_str = f"Recoverable)"
+    elif sev == "01000000":
+        sev_str = f"Fatal"
+    elif sev == "02000000":
+        sev_str = f"Corrected"
+    elif sev == "03000000":
+        sev_str = f"Informational"
+    else:
+        sev_str = "Unknown severity"
+    return sev_str + f" (Raw: {sev})"
+
+
 print("CPER Raw data parser\n")
-
-
 
 raw = input("CPER Raw data: ")
 
@@ -46,10 +58,10 @@ rec_header = \
         "Revision          : " + revision + "\n" + \
         "Signature End     : " + sig_end + "\n" + \
         "Section Count     : " + sec_cnt + "\n" + \
-        "Error Severity    : " + err_sev + "\n" + \
+        "Error Severity    : " + severity(err_sev) + "\n" + \
         "Validation Bits   : " + valid_bits + "\n" + \
         "Record Length     : " + rec_len + "\n" + \
-        "Timestamp         : " + bcd_parser(timestmp) + "\n" + \
+        "Timestamp         : " + bcd_parser(timestmp) + f" (Raw: {timestmp})" +"\n" + \
         "Platform ID       : " + pf_id + "\n" + \
         "Partition ID      : " + part_id + "\n" + \
         "Creator ID        : " + crea_id + "\n" + \
@@ -68,6 +80,6 @@ print("\nCPER Parse result:")
 print("\nRaw data length: "+ str(int(len(raw)/2)) + "\n")
 print("[Record Header]")
 print(rec_header)
-print("\n[Section Descriptor]")
+print("\n[Section Descriptor]"+", descriptor total length: "+str(len(sec_desc)))
 print(descriptor)
-
+# print(severity(err_sev))
