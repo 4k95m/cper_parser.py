@@ -1,3 +1,15 @@
+import re
+
+
+
+def splitter(str):
+    split_text = re.split("(..)", str)
+    split_text = split_text[1::2]
+    split_text.reverse()
+    return "".join(split_text)
+
+
+
 def bcd_parser(bcd):
     century = str(int(bcd[-2:], 16))
     year = str(int(bcd[-4:-2], 16))
@@ -14,17 +26,18 @@ def bcd_parser(bcd):
 
 
 def severity(sev):
+    sev = splitter(sev)
     if sev == "00000000":
         sev_str = f"Recoverable)"
-    elif sev == "01000000":
+    elif sev == "00000001":
         sev_str = f"Fatal"
-    elif sev == "02000000":
+    elif sev == "00000002":
         sev_str = f"Corrected"
-    elif sev == "03000000":
+    elif sev == "00000003":
         sev_str = f"Informational"
     else:
         sev_str = "Unknown severity"
-    return sev_str + f" (Raw: {sev})"
+    return sev_str
 
 
 print("CPER Raw data parser\n")
@@ -47,39 +60,63 @@ rec_id = raw[192:208] # 8
 flags = raw[208:216] # 4
 persis_info = raw[216:232] # 8
 resv = raw[232:256] # 12
-sec_desc = raw[256:] # Nx72
+sec_desc = raw[256:400] # Nx72
 
-sec_sev = sec_desc[-48:-40]
-fru_txt = sec_desc[-40:]
+sec_off = sec_desc[0:8] # 4
+sec_len = sec_desc[8:16] # 4
+sec_rev = sec_desc[16:20] # 2
+sec_valid = sec_desc[20:22] # 1
+sec_resv = sec_desc[22:24] # 2
+sec_flags = sec_desc[24:32] # 4
+sec_type = sec_desc[32:64] # 16
+fru_id = sec_desc[64:96] # 16
+sec_sev = sec_desc[96:104] # 8
+fru_txt = sec_desc[104:144] # 20
 fru_txt_ascii = bytearray.fromhex(fru_txt).decode()
 
 rec_header = \
-        "Signature Start   : " + sig_start + " (" + bytearray.fromhex(sig_start).decode() + ")" + "\n" + \
-        "Revision          : " + revision + "\n" + \
-        "Signature End     : " + sig_end + "\n" + \
-        "Section Count     : " + sec_cnt + "\n" + \
-        "Error Severity    : " + severity(err_sev) + "\n" + \
-        "Validation Bits   : " + valid_bits + "\n" + \
-        "Record Length     : " + rec_len + "\n" + \
-        "Timestamp         : " + bcd_parser(timestmp) + f" (Raw: {timestmp})" +"\n" + \
-        "Platform ID       : " + pf_id + "\n" + \
-        "Partition ID      : " + part_id + "\n" + \
-        "Creator ID        : " + crea_id + "\n" + \
-        "Notification Type : " + notif_type + "\n" + \
-        "Record ID         : " + rec_id + "\n" + \
-        "Flags             : " + flags + "\n" + \
-        "Persistence Info  : " + persis_info + "\n" + \
-        "Reserved [ZERO]   : " + resv + "\n"
+        "- Signature Start   : " + sig_start + " (" + bytearray.fromhex(sig_start).decode() + ")" + "\n" + \
+        "- Revision          : " + splitter(revision) + "\n" + \
+        "- Signature End     : " + sig_end + "\n" + \
+        "- Section Count     : " + splitter(sec_cnt) + "\n" + \
+        "- Error Severity    : " + severity(err_sev) + "\n" + \
+        "- Validation Bits   : " + valid_bits + "\n" + \
+        "- Record Length     : " + str(int(splitter(rec_len), 16)) + "\n" + \
+        "- Timestamp         : " + bcd_parser(timestmp) +"\n" + \
+        "- Platform ID       : " + pf_id + "\n" + \
+        "- Partition ID      : " + part_id + "\n" + \
+        "- Creator ID        : " + crea_id + "\n" + \
+        "- Notification Type : " + notif_type + "\n" + \
+        "- Record ID         : " + rec_id + "\n" + \
+        "- Flags             : " + flags + "\n" + \
+        "- Persistence Info  : " + persis_info + "\n" + \
+        "- Reserved [ZERO]   : " + resv + "\n"
         
 descriptor = \
-        "- Section Severity: " + sec_sev + "\n" + \
+        "- Section Offset  : " + str(int(splitter(sec_off), 16)) + "\n" + \
+        "- Section Length  : " + str(int(splitter(sec_len), 16)) + "\n" + \
+        "- Section Revision: " + sec_rev + "\n" + \
+        "- Section ValidBit: " + sec_valid + "\n" + \
+        "- Reserved [ZERO] : " + sec_resv + "\n" + \
+        "- Flags           : " + sec_flags + "\n" + \
+        "- Section Types   : " + sec_type + "\n" + \
+        "- FRU Id          : " + fru_id + "\n" + \
+        "- Section Severity: " + severity(sec_sev) + "\n" + \
         "- FRU Text (Hex)  : " + fru_txt + "\n" + \
         "- FRU Text (Ascii): " + fru_txt_ascii
 
 print("\nCPER Parse result:")
-print("\nRaw data length: "+ str(int(len(raw)/2)) + "\n")
-print("[Record Header]")
+print("\nRaw data length: "+ str(int(len(raw)/2)))
+print("\n[Record Header]")
 print(rec_header)
-print("\n[Section Descriptor]"+", descriptor total length: "+str(len(sec_desc)))
+print("\n[Section Descriptor]")
 print(descriptor)
-# print(severity(err_sev))
+print("\n")
+# print("sec desc 1 (length: "+str(len(sec_desc)/2)+") : "+sec_desc+"\n")
+
+print("Section 1 (Raw)  :\n" + raw[400:])
+print("\nPartial parse result:")
+print("Section 1 (Ascii):\n" + bytearray.fromhex(raw[-40:]).decode())
+
+
+#print(str(len(raw[400:])/2))
