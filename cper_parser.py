@@ -40,6 +40,21 @@ def severity(sev):
     return sev_str
 
 
+
+def validbits_parser(valid_bits):
+    vb_bin = f"{int(valid_bits, 16):0>32b}"
+    valids = []
+    if vb_bin[-1]=="1":
+        valids.append("Platform ID")
+    if vb_bin[-2]=="1":
+        valids.append("Timestamp")
+    if vb_bin[-3]=="1":
+        valids.append("Partition ID")
+
+    return "Valid values in: "+", ".join(valids)
+
+
+
 print("CPER Raw data parser\n")
 
 raw = input("CPER Raw data: ")
@@ -49,7 +64,7 @@ revision = byte_parse(raw[8:12]) # 2
 sig_end = raw[12:20] # 4
 sec_cnt = int(byte_parse(raw[20:24])) # 2
 err_sev = raw[24:32] # 4
-valid_bits = raw[32:40] # 4
+valid_bits = byte_parse(raw[32:40]) # 4
 rec_len = raw[40:48] # 4
 timestmp = raw[48:64] # 8
 pf_id = raw[64:96] # 16
@@ -101,7 +116,7 @@ rec_header = \
         "- Signature End     : " + sig_end + "\n" + \
         "- Section Count     : " + str(sec_cnt) + "\n" + \
         "- Error Severity    : " + severity(err_sev) + "\n" + \
-        "- Validation Bits   : " + valid_bits + "\n" + \
+        "- Validation Bits   : " + validbits_parser(valid_bits) + "\n" + \
         "- Record Length     : " + str(int(byte_parse(rec_len), 16)) + "\n" + \
         "- Timestamp         : " + bcd_parser(timestmp) +"\n" + \
         "- Platform ID       : " + pf_id + "\n" + \
@@ -113,18 +128,7 @@ rec_header = \
         "- Persistence Info  : " + persis_info + "\n" + \
         "- Reserved [ZERO]   : " + resv + "\n"
 
-#descriptor = \
-#        "- Section Offset  : " + str(int(byte_parse(sec_off), 16)) + "\n" + \
-#        "- Section Length  : " + str(int(byte_parse(sec_len), 16)) + "\n" + \
-#        "- Section Revision: " + sec_rev + "\n" + \
-#        "- Section ValidBit: " + sec_valid + "\n" + \
-#        "- Reserved [ZERO] : " + sec_resv + "\n" + \
-#        "- Flags           : " + sec_flags + "\n" + \
-#        "- Section Types   : " + sec_type + "\n" + \
-#        "- FRU Id          : " + fru_id + "\n" + \
-#        "- Section Severity: " + severity(sec_sev) + "\n" + \
-#        "- FRU Text (Hex)  : " + fru_txt + "\n" + \
-#        "- FRU Text (Ascii): " + fru_txt_ascii
+
 
 print("\n####################")
 print("CPER Parse result")
@@ -140,11 +144,11 @@ print("#########################")
 for sec_desc in sec_desc_list:
     print(sec_desc_parser(sec_desc))
     print("\n")
-# print("sec desc 1 (length: "+str(len(sec_desc)/2)+") : "+sec_desc+"\n")
+
 
 print("Section 1 (Raw)  :\n" + raw[400:])
 print("\nPartial parse result:")
 print("Section 1 (Ascii):\n" + bytearray.fromhex(raw[-40:]).decode())
 
 
-#print(str(len(raw[400:])/2))
+
