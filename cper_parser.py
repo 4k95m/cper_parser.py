@@ -82,9 +82,9 @@ for i in range(sec_cnt):
     end = start+144
     sec_desc_list.append(raw[start:end])
 
-def sec_desc_parser(sec_desc):
-    sec_off = sec_desc[0:8] # 4
-    sec_len = sec_desc[8:16] # 4
+def sec_parser(sec_desc):
+    sec_off = int(byte_parse(sec_desc[0:8]), 16) # 4
+    sec_len = int(byte_parse(sec_desc[8:16]), 16) # 4
     sec_rev = sec_desc[16:20] # 2
     sec_valid = sec_desc[20:22] # 1
     sec_resv = sec_desc[22:24] # 2
@@ -94,21 +94,24 @@ def sec_desc_parser(sec_desc):
     sec_sev = sec_desc[96:104] # 8
     fru_txt = sec_desc[104:144] # 20
     fru_txt_ascii = bytearray.fromhex(fru_txt).decode()
+    
+    content = raw[sec_off*2:(sec_off + sec_len)*2]
 
-    descriptor = \
-            "- Section Offset  : " + str(int(byte_parse(sec_off), 16)) + "\n" + \
-            "- Section Length  : " + str(int(byte_parse(sec_len), 16)) + "\n" + \
-            "- Section Revision: " + sec_rev + "\n" + \
-            "- Section ValidBit: " + sec_valid + "\n" + \
-            "- Reserved [ZERO] : " + sec_resv + "\n" + \
-            "- Flags           : " + sec_flags + "\n" + \
-            "- Section Types   : " + sec_type + "\n" + \
-            "- FRU Id          : " + fru_id + "\n" + \
-            "- Section Severity: " + severity(sec_sev) + "\n" + \
-            "- FRU Text (Hex)  : " + fru_txt + "\n" + \
-            "- FRU Text (Ascii): " + fru_txt_ascii
+    section = \
+            "- Section Offset    : " + str(sec_off) + "\n" + \
+            "- Section Length    : " + str(sec_len) + "\n" + \
+            "- Section Revision  : " + sec_rev + "\n" + \
+            "- Section ValidBit  : " + sec_valid + "\n" + \
+            "- Reserved [ZERO]   : " + sec_resv + "\n" + \
+            "- Flags             : " + sec_flags + "\n" + \
+            "- Section Types     : " + sec_type + "\n" + \
+            "- FRU Id            : " + fru_id + "\n" + \
+            "- Section Severity  : " + severity(sec_sev) + "\n" + \
+            "- FRU Text (Hex)    : " + fru_txt + "\n" + \
+            "- FRU Text (Ascii)  : " + fru_txt_ascii + "\n\n" + \
+            "- Section Content   : " + content
 
-    return descriptor
+    return section
 
 rec_header = \
         "- Signature Start   : " + sig_start + " (" + bytearray.fromhex(sig_start).decode() + ")" + "\n" + \
@@ -139,16 +142,18 @@ print("[Record Header]")
 print("###################")
 print(rec_header)
 print("\n#########################")
-print("[Section Descriptors]")
+print("[Sections]")
 print("#########################")
 for sec_desc in sec_desc_list:
-    print(sec_desc_parser(sec_desc))
-    print("\n")
+    num = sec_desc_list.index(sec_desc)
+    print(f"[Section {num}]")
+    print(sec_parser(sec_desc))
+    print("\n\n")
 
 
-print("Section 1 (Raw)  :\n" + raw[400:])
-print("\nPartial parse result:")
-print("Section 1 (Ascii):\n" + bytearray.fromhex(raw[-40:]).decode())
+# print("Section 1 (Raw)  :\n" + raw[400:])
+# print("\nPartial parse result:")
+# print("Section 1 (Ascii):\n" + bytearray.fromhex(raw[-40:]).decode())
 
 
 
